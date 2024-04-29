@@ -39,3 +39,34 @@ WHERE TO_CHAR(sent_date, 'mm-yyyy') = '08-2022'
 GROUP BY sender_id
 ORDER BY total_mess_sent DESC
 LIMIT 2;
+
+--EX6
+SELECT tweet_id
+FROM tweets
+WHERE LENGTH(content) >15
+
+--EX7
+SELECT DISTINCT activity_date as day,
+COUNT(DISTINCT user_id) AS active_users
+FROM activity
+WHERE activity_date BETWEEN '2019-06-27' AND '2019-07-27'
+GROUP BY activity_date
+
+--EX8
+select 
+POSITION('a' IN first_name)
+from worker
+WHERE first_name = 'Amitah';
+
+--EX9
+select 
+COUNT (id)
+from employees
+WHERE TO_CHAR(joining_date,'mm-yyyy')BETWEEN '01-2022' AND '07-2022'
+
+
+--EX10
+select SUBSTRING(title,LENGTH(winery)+2,4)
+from winemag_p2
+WHERE country= 'Macedonia'
+;
