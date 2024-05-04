@@ -38,4 +38,16 @@ ON a.user_id=b.user_id
 WHERE a.activity_type <> 'chat'
 GROUP BY age_bucket
 
+ --EX4
+SELECT 
+a.customer_id
+FROM customer_contracts AS a
+INNER JOIN products AS b 
+ON a.product_id=b.product_id
+WHERE b.product_category IN ('Analytics','Containers','Compute')
+GROUP BY a.customer_id
+HAVING COUNT(DISTINCT b.product_category)=3
+;
+
+
 
