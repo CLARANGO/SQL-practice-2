@@ -63,6 +63,33 @@ WHERE liked_date IS NULL
 
 
 --EX5
+SELECT EXTRACT(MONTH FROM A.event_date) AS mth, 
+COUNT(DISTINCT A.user_id) AS monthly_active_users
+FROM user_actions AS A  
+
+WHERE 
+EXISTS(SELECT DISTINCT B.user_id
+FROM user_actions AS B 
+WHERE A.user_id=B.user_id
+AND EXTRACT(month FROM event_date)=6)
+
+AND EXTRACT(month FROM A.event_date)=7
+GROUP BY mth
+       
+-------------------------------------------------------
+WITH a AS (SELECT DISTINCT user_id, event_date
+FROM user_actions 
+WHERE EXTRACT(month FROM event_date)=6),
+
+b AS (SELECT DISTINCT user_id, event_date
+FROM user_actions 
+WHERE EXTRACT(month FROM event_date)=7)
+
+SELECT EXTRACT(MONTH FROM b.event_date) AS mth, 
+COUNT(DISTINCT a.user_id) AS monthly_active_users
+FROM a JOIN b ON a.user_id=b.user_id
+WHERE a.user_id=b.user_id
+GROUP BY mth
 
 
 --EX6
