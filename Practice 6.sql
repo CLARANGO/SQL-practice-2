@@ -11,13 +11,25 @@ WHERE job_count >1
 
 
 --EX2
-WITH tt_sp_cte AS 
 (SELECT category, product,
 SUM(spend) as total_spend
 FROM product_spend
-WHERE EXTRACT(year FROM transaction_date) = '2022'
-GROUP BY category, product)
---den day kb lam nua
+WHERE category='appliance' AND 
+EXTRACT(year FROM transaction_date) = '2022'
+GROUP BY category, product
+ORDER BY total_spend DESC
+LIMIT 2)
+
+UNION ALL
+
+(SELECT category, product,
+SUM(spend) as total_spend
+FROM product_spend
+WHERE category='electronics' AND 
+EXTRACT(year FROM transaction_date) = '2022'
+GROUP BY category, product
+ORDER BY total_spend DESC
+LIMIT 2)
 
 
 --EX3
