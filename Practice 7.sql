@@ -39,3 +39,19 @@ GROUP BY user_id,transaction_date
 ORDER BY transaction_date;
 
 --EX5
+WITH aa AS
+(SELECT user_id,	tweet_date, tweet_count as curr_count,
+LAG(tweet_count) OVER(PARTITION BY user_id) as fol_count,
+LAG(tweet_count,2) OVER(PARTITION BY user_id) as fol_count1
+FROM tweets) 
+
+SELECT aa.user_id,	aa.tweet_date,
+(CASE
+ WHEN aa.fol_count is null THEN ROUND(aa.curr_count::decimal/1,2)
+ WHEN aa.fol_count1 is null THEN ROUND((aa.curr_count+aa.fol_count)::decimal/2,2)
+ WHEN aa.fol_count1 is not null THEN ROUND((aa.curr_count+aa.fol_count+aa.fol_count1)::decimal/3,2)
+ END) as rolling_avg_3d
+FROM aa
+
+--EX6
+
