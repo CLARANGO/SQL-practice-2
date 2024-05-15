@@ -1,7 +1,7 @@
-select * from bigquery-public-data.thelook_ecommerce.orders
-select * from bigquery-public-data.thelook_ecommerce.products
-select * from bigquery-public-data.thelook_ecommerce.order_items
-select * from bigquery-public-data.thelook_ecommerce.users
+--select * from bigquery-public-data.thelook_ecommerce.orders
+--select * from bigquery-public-data.thelook_ecommerce.products
+--select * from bigquery-public-data.thelook_ecommerce.order_items
+--select * from bigquery-public-data.thelook_ecommerce.users
 
 
 select
@@ -13,8 +13,8 @@ where FORMAT_DATE('%Y-%m',delivered_at) between'2019-01' and '2020-04'
 group by month_year
 order by month_year
 
---There was a consistent growth of more than 200 in the number of buyers from Jan 2019 to April 2020. In addition, the total number of completed orders between Jan 2019 and April 2020 was stable at above 50% of the total number of orders.
-
+-- There was a consistent growth of more than 850 in the number of buyers from Jan 2019 to April 2022. The number of buyers dropped from 824 to 714 then rose again to 914 in three months from January 2022 to March 2022
+-- In addition, the total number of completed orders between Jan 2019 and April 2022 was increasing and stable at above 70% of the total order number.
 
 select
 FORMAT_DATE('%Y-%m',delivered_at) as month_year,
@@ -26,8 +26,8 @@ group by month_year
 order by month_year
 
 
---Even though there was a significant rise in the number of distinct customers, the average sales amount per order decreased over the period from Jan 2019 to April 2024
-
+--There was a significant rise of more than 600 in the number of distinct customers while the average sales amount per order remained quite stable at the range from 55 to 70 over the period from Jan 2019 to April 2024.
+--There was a slight drop in the quantity of customers of 63 between January 2022 and February 2022 before increasing significantly by 123 customers in March 2022.
 
 with a as (
 select 
@@ -47,8 +47,9 @@ select *,
 case  when age =12 then 'youngest' else 'oldest' end as TAG
 from a
 
+--From January 2019 to April 2022, the youngest age of both male and female customers is 12 with 1028 customers, while the oldest age is 70 with 1070 customers.
 
-
+  
 with a as (
 select FORMAT_DATE ('%Y-%m', delivered_at) as month_year,
 product_id, 
