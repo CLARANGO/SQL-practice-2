@@ -29,28 +29,23 @@ order by month_year
 --Even though there was a significant rise in the number of distinct customers, the average sales amount per order decreased over the period from Jan 2019 to April 2024
 
 
-create temporary table bigquery-public-data.youngest_oldest_age_user (
 with a as (
 select 
-first_name, last_name, gender,
-min(age) over(partition by gender) as age,
+first_name, last_name, gender, age
 from bigquery-public-data.thelook_ecommerce.users
 where created_at between '2019-01-01' and '2022-04-30'
+and age in (select min(age)from bigquery-public-data.thelook_ecommerce.users group by gender)
 union all
 select 
-first_name, last_name, gender,
-max(age) over(partition by gender) as age,
+first_name, last_name, gender,age
 from bigquery-public-data.thelook_ecommerce.users
 where created_at between '2019-01-01' and '2022-04-30'
+and age in (select max(age)from bigquery-public-data.thelook_ecommerce.users group by gender)
 )
 
 select *,
-case 
-when age =12 then 'youngest'
-else 'oldest'
-end as TAG
+case  when age =12 then 'youngest' else 'oldest' end as TAG
 from a
-order by age)
 
 
 
@@ -66,8 +61,14 @@ b as (select id as product_id, name as product_name, round (cost,2) as cost
 from bigquery-public-data.thelook_ecommerce.products
 order by id)
 
+select * from(
 select a.month_year, a.product_id, b.product_name, a.sales, b.cost ,
 round(a.sales/b.cost *100,2) as profit,
-row_number() over(partition by a.month_year) as rank_per_month
+dense_rank() over(partition by a.month_year order by cast(a.sales/b.cost *100 as string)) as rank_per_month
 from a join b on a.product_id=b.product_id
-order by a.month_year
+order by a.month_year) as c
+where rank_per_month<=3
+
+
+
+
