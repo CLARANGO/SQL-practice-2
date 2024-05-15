@@ -29,25 +29,62 @@ order by month_year
 --There was a significant rise of more than 600 in the number of distinct customers while the average sales amount per order remained quite stable at the range from 55 to 70 over the period from Jan 2019 to April 2024.
 --There was a slight drop in the quantity of customers of 63 between January 2022 and February 2022 before increasing significantly by 123 customers in March 2022.
 
-with a as (
-select 
-first_name, last_name, gender, age
-from bigquery-public-data.thelook_ecommerce.users
-where created_at between '2019-01-01' and '2022-04-30'
-and age in (select min(age)from bigquery-public-data.thelook_ecommerce.users group by gender)
+--find min max age for each gender
+ with a as (select gender,
+ min(age) as min_age,
+ max(age) as max_age
+ from bigquery-public-data.thelook_ecommerce.users
+ group by gender
+ )
+ --tag youngest oldest
+,gender_young_old as (
+ select first_name, last_name, gender,age, 
+ case when age=(select min_age from a where gender='M') then 'youngest' 
+ when age=(select max_age from a where gender='M') then'oldest' end as tag
+ from bigquery-public-data.thelook_ecommerce.users
+ where gender='M' 
+ and (age=(select min_age from a where gender='M') or age=(select max_age from a where gender='M'))
+
 union all
-select 
-first_name, last_name, gender,age
-from bigquery-public-data.thelook_ecommerce.users
-where created_at between '2019-01-01' and '2022-04-30'
-and age in (select max(age)from bigquery-public-data.thelook_ecommerce.users group by gender)
+
+select first_name, last_name, gender,age, 
+ case when age=(select min_age from a where gender='F') then 'youngest' 
+ when age=(select max_age from a where gender='F') then'oldest' end as tag
+ from bigquery-public-data.thelook_ecommerce.users
+ where gender='F' 
+ and (age=(select min_age from a where gender='F') or age=(select max_age from a where gender='F')))
+
+ select age, tag, count(*) as count_min_max_age from gender_young_old 
+group by age, tag
+--From January 2019 to April 2022, the youngest age of both male and female customers is 12 with 1696 customers, while the oldest age is 70 with 1729 customers.
+
+----------------------------------------------------(COMBINE 2 STEPS: 
+with ab as (
+ select first_name, last_name, gender,age, 
+ case 
+ when age=(select min(age) from bigquery-public-data.thelook_ecommerce.users where gender='M'group by gender) then 'youngest' 
+ when age=(select max(age) from bigquery-public-data.thelook_ecommerce.users where gender='M'group by gender) then'oldest' 
+ end as tag
+ from bigquery-public-data.thelook_ecommerce.users
+ where gender='M' 
+ and (age=(select min(age) from bigquery-public-data.thelook_ecommerce.users where gender='M'group by gender) or age=(select max(age) from bigquery-public-data.thelook_ecommerce.users where gender='M'group by gender))
+
+union all
+
+ select first_name, last_name, gender,age, 
+ case 
+ when age=(select min(age) from bigquery-public-data.thelook_ecommerce.users where gender='F'group by gender) then 'youngest' 
+ when age=(select max(age) from bigquery-public-data.thelook_ecommerce.users where gender='F'group by gender) then'oldest' 
+ end as tag
+ from bigquery-public-data.thelook_ecommerce.users
+ where gender='F' 
+ and (age=(select min(age) from bigquery-public-data.thelook_ecommerce.users where gender='F'group by gender) or age=(select max(age) from bigquery-public-data.thelook_ecommerce.users where gender='F'group by gender))
 )
 
-select *,
-case  when age =12 then 'youngest' else 'oldest' end as TAG
-from a
+select age, tag, count(*) as count_min_max_age from ab 
+group by age, tag;
+)---------------------------------------------------------
 
---From January 2019 to April 2022, the youngest age of both male and female customers is 12 with 1028 customers, while the oldest age is 70 with 1070 customers.
 
   
 with a as (
