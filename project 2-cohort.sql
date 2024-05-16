@@ -40,8 +40,6 @@ from bb
 order by product_category,month)
 
 
---- chi hi huc ca toi tuong 1) vs 2) lien quan den nhau nen chua lam xong haha. 
---em xem tam phan nay di chi lam roi nop tiep huhuhu 
 
 
 
