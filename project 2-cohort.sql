@@ -1,33 +1,11 @@
+--select* from bigquery-public-data.thelook_ecommerce.order_items order by product_id
+--select * from bigquery-public-data.thelook_ecommerce.orders
+--select * from bigquery-public-data.thelook_ecommerce.products order by id
 
 
------------------------------------
-select order_id,
-format_date('%Y-%m', created_at) as month,
-extract(year from created_at) as year
-from bigquery-public-data.thelook_ecommerce.orders
-where status='Complete' 
 
 
-select
-format_date('%Y-%m', delivered_at) as month,
-sum(sale_price)  as TPV,
-count(order_id) as TPO
-from bigquery-public-data.thelook_ecommerce.order_items
-where status='Complete' 
-group by month
-
-
-select id as product_id,
-category as product_category,
-cost
-from bigquery-public-data.thelook_ecommerce.products
-
----------------------------------------
-select* from bigquery-public-data.thelook_ecommerce.order_items order by product_id
-select * from bigquery-public-data.thelook_ecommerce.orders
-select * from bigquery-public-data.thelook_ecommerce.products order by id
-
-with a as (
+with aa as (
 select b.order_id, b.product_id,
 format_date('%Y-%m', a.created_at) as month,
 extract(year from a.created_at) as year,
@@ -37,14 +15,39 @@ c.cost
 from bigquery-public-data.thelook_ecommerce.orders as a
 join bigquery-public-data.thelook_ecommerce.order_items as b on a.order_id=b.order_id
 join bigquery-public-data.thelook_ecommerce.products as c on b.product_id=c.id
-where b.status='Complete' 
-order by month
-)
+where b.status='Complete' and b.sale_price >0 and c.cost>0 and c.category <>''
+order by product_category, month
+),
 
-select month,
-sum(sale_price)  as TPV,
+bb as (
+select month, year, product_category,
+round(sum(sale_price),2)  as TPV,
 count(order_id) as TPO,
-sum(cost) as total_cost
-from a
-group by month
-order by month
+round(sum(cost),2) as total_cost,
+round(sum(sale_price)-sum(cost) ,2) as total_profit,
+round((sum(sale_price)-sum(cost))/sum(cost),2) as profit_to_cost_ratio
+from aa
+group by  month, year, product_category
+order by product_category, month
+),
+vw_ecommerce_analyst as (
+select
+month, year, product_category, TPV,TPO, 
+round((lead(TPV) over(partition by product_category order by month)-TPV)/TPV*100,2) ||'%' as revenue_growth,
+round((lead(TPO) over(partition by product_category order by month)-TPO)/TPO*100,2)|| '%' as order_growth,
+total_cost, total_profit, profit_to_cost_ratio
+from bb 
+order by product_category,month)
+
+
+select
+product_category, TPV,
+min(month) over(partition by product_category ) as cohort_date,
+cast(month as date)
+from vw_ecommerce_analyst
+order by product_category
+
+
+
+
+
