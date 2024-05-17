@@ -81,17 +81,44 @@ min (created_at) over(partition by user_id) as first_purchase_date,
 created_at
 from for_corhort
 where status NOT IN ( ' Cancelled', 'Returned'))
-where first_purchase_date between'2024-02-01' and '2024-05-31'
-and created_at between'2024-02-01' and '2024-05-31'
-
-)
-
+--where first_purchase_date between'2024-02-01' and '2024-05-31'
+--and created_at between'2024-02-01' and '2024-05-31'
+),
+YY as(
 select cohort_date, index,
 count(distinct user_id) as no_customers,
 sum(price) as revenue
 from d
 group by cohort_date, index
-order by cohort_date, index
+order by cohort_date, index),
+
+
+--cohort chart
+c_chart as(
+select cohort_date,
+sum(case when index =1 then no_customers else 0 end) as M1,
+sum(case when index =2 then no_customers else 0 end) as M2,
+sum(case when index =3 then no_customers else 0 end) as M3,
+sum(case when index =4 then no_customers else 0 end) as M4,
+from yy
+group by cohort_date
+order by cohort_date )
+
+
+--retention cohort
+
+
+select cohort_date,
+concat (round (m1/m1*100) , '%') as m1,
+concat (round (m2/m1*100) , '%') as m2,
+concat (round (m3/m1*100) , '%') as m3,
+concat (round (m4/m1*100) , '%') as m4
+from c_chart 
+
+
+
+
+
 
 
 
