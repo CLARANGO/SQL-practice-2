@@ -3,7 +3,7 @@
 --select * from bigquery-public-data.thelook_ecommerce.products order by id
 
 
-
+--1) create dataset
 
 with aa as (
 select b.order_id, b.product_id,
@@ -39,6 +39,59 @@ total_cost, total_profit, profit_to_cost_ratio
 from bb 
 order by product_category,month)
 
+
+
+
+  
+--2) retention cohort analysis.
+--Exploration & Cleaning
+
+with a as (select 
+id,
+order_id,
+user_id,
+product_id,
+inventory_item_id,
+status,
+created_at,
+shipped_at,
+delivered_at,
+returned_at,
+cast(sale_price as numeric) as price
+from bigquery-public-data.thelook_ecommerce.order_items
+where user_id is not null and cast(sale_price as numeric)>0 ),
+
+for_corhort as (
+select * from (select *,
+row_number() over(partition by id, order_id,user_id,product_id,inventory_item_id,status order by created_at) as rnk
+from a ) as b
+where rnk=1 ),
+
+--cohort
+d as(
+select user_id, price,
+format_date('%Y-%m', first_purchase_date) as cohort_date,
+created_at,
+(extract(year from created_at) - extract(year from first_purchase_date))*12
++ (extract(month from created_at)-extract(month from first_purchase_date)) +1 as index
+from (
+select user_id,
+round(price,2) as price,
+min (created_at) over(partition by user_id) as first_purchase_date,
+created_at
+from for_corhort
+where status NOT IN ( ' Cancelled', 'Returned'))
+where first_purchase_date between'2024-02-01' and '2024-05-31'
+and created_at between'2024-02-01' and '2024-05-31'
+
+)
+
+select cohort_date, index,
+count(distinct user_id) as no_customers,
+sum(price) as revenue
+from d
+group by cohort_date, index
+order by cohort_date, index
 
 
 
