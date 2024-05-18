@@ -55,3 +55,68 @@ FROM aa
 
 --EX6
 
+with dup as (
+ select  merchant_id, credit_card_id, amount, transaction_timestamp
+ from (
+ select merchant_id, credit_card_id, amount, transaction_timestamp,
+ count(row_number) over (PARTITION BY  merchant_id, credit_card_id, amount)
+ from (
+select merchant_id, credit_card_id, amount, transaction_timestamp,
+row_number() over( PARTITION BY  merchant_id, credit_card_id, amount)
+from transactions) b )c 
+where count >1 ),
+
+gap as (
+select merchant_id, credit_card_id, amount,
+transaction_timestamp, transaction_timestamp,
+(DATE_PART('Day', following_payment_date - transaction_timestamp)) * 24 + 
+(DATE_PART('Hour', following_payment_date - transaction_timestamp)) * 60 +
+(DATE_PART('Minute', following_payment_date - transaction_timestamp)) as diff
+
+from(
+select merchant_id, credit_card_id, amount, transaction_timestamp,
+lead(transaction_timestamp) over(order by transaction_timestamp) as following_payment_date
+ from dup) as d )
+ 
+SELECT sum (count) as payment_count
+from (
+select merchant_id, credit_card_id,
+count(merchant_id) 
+from gap 
+where diff <=10
+GROUP BY merchant_id, credit_card_id) as count_repeated_trans
+
+
+
+--EX7
+with a as (select category, product,
+sum(spend) as total_spend
+from product_spend
+where transaction_date between '2022-01-01' and '2022-12-31'
+group by category, product)
+
+select category, product, total_spend
+from (select category, product, total_spend,
+rank() over(PARTITION BY category order by total_spend desc) as rank_
+from a) as b  
+where rank_ <=2
+
+
+--EX8
+with aa as (SELECT c.day, a.artist_id, a.artist_name, b.song_id, c.rank 
+FROM artists as a  
+join songs as b  on a.artist_id=b.artist_id
+join global_song_rank  as c on b.song_id=c.song_id
+where c.rank <=10)
+
+select artist_name, artist_rank from (
+select artist_name ,
+dense_rank() over(order by count DESC) as artist_rank
+from 
+(SELECT artist_name,
+count(rank)
+from aa
+group by artist_name) as bb) as cc  
+where artist_rank <=5
+ ;
+
