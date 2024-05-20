@@ -30,3 +30,22 @@ join a on a.player_id=b.player_id
 --3
 
 
+
+--4
+with b as(
+select visited_on, amount_ind,
+sum(amount_ind) over(order by visited_on rows between 6 preceding and current row) as amount,
+round(avg(amount_ind) over(order by visited_on rows between 6 preceding and current row),2)as average_amount 
+from(
+SELECT visited_on,
+SUM(amount) as amount_ind
+FROM Customer
+GROUP BY visited_on) as a)
+
+select visited_on, amount, average_amount 
+from (
+select visited_on, amount, average_amount,
+lag(visited_on,6) over(order by visited_on) as visited_7days_pre
+from b) as c
+where visited_7days_pre is not null
+
