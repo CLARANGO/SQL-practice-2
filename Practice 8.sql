@@ -49,3 +49,20 @@ lag(visited_on,6) over(order by visited_on) as visited_7days_pre
 from b) as c
 where visited_7days_pre is not null
 
+
+--5
+
+select 
+cast(sum(tiv_2016 ) as decimal) as tiv_2016 
+from(
+select pid , tiv_2015 , tiv_2016 , loc,
+count(rank_loc) over(partition by rank_loc) as count_loc,
+count(rank) over(partition by rank) as count_tiv
+from(
+select pid , tiv_2015 , tiv_2016 , concat(lat,',',lon) as loc,
+rank() over(order by concat(lat,',',lon)) as rank_loc,
+rank() over(order by tiv_2015)
+from Insurance ) as a 
+) as b
+where count_tiv !=1 and count_loc =1
+
