@@ -66,3 +66,20 @@ from Insurance ) as a
 ) as b
 where count_tiv !=1 and count_loc =1
 
+
+--6
+with ab as (
+select * from (
+select * ,
+dense_rank() over(partition by departmentId order by salary desc)
+from employee
+) as a
+where dense_rank <=3)
+
+select b.name as department, ab.name as employee, ab.salary
+from Department as b 
+join ab 
+on b.id =ab.departmentid 
+
+
+
