@@ -82,4 +82,18 @@ join ab
 on b.id =ab.departmentid 
 
 
+--7
+select person_name 
+from (
+select *,
+sum(weight) over (order by turn)
+from Queue ) as a
+where sum<=1000 order by turn desc
+limit 1
+
+
+
+--8
+
+
 
